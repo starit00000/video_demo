@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1024598802848",
+    "project_id": "video-demo-7bcc3",
+    "storage_bucket": "video-demo-7bcc3.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1024598802848:android:6b3637a1f05a1db195e4c5",
+        "android_client_info": {
+          "package_name": "com.starit.video_demo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1024598802848-smarpqf4u53j1iju8j6tn4t5g2jqj6bc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIc5LsfasJPyQTxl8jnjHaVx6cB3DkW8k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1024598802848-smarpqf4u53j1iju8j6tn4t5g2jqj6bc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
