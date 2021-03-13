@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:connectycube_sdk/connectycube_sdk.dart';
+import 'package:progress_dialog/progress_dialog.dart';
 import 'package:video_demo/pages/select_opponent_page.dart';
 import 'package:video_demo/utils/config.dart';
 
@@ -14,8 +16,14 @@ class _LoginPageState extends State<LoginPage> {
   var _nameController = TextEditingController();
   var _loginController = TextEditingController();
 
+  ProgressDialog progresDialog;
+
+  final databaseReference = FirebaseDatabase.instance.reference();
+
   @override
   Widget build(BuildContext context) {
+    progresDialog = ProgressDialog(context);
+
     return Scaffold(
       appBar: AppBar(
         title: Text('SignUp'),
@@ -25,52 +33,63 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Widget _buildBody() {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-          child: TextField(
-            controller: _nameController,
-            decoration: InputDecoration(hintText: 'Full name'),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            child: TextField(
+              controller: _nameController,
+              decoration: InputDecoration(hintText: 'Full name'),
+            ),
           ),
-        ),
-        Container(
-          padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
-          child: TextField(
-            controller: _loginController,
-            decoration: InputDecoration(hintText: 'Login key'),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 32, vertical: 8),
+            child: TextField(
+              controller: _loginController,
+              decoration: InputDecoration(hintText: 'Login key'),
+            ),
           ),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            _signUpUser();
-          },
-          child: Text('SignUp'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            var user = CubeUser(password: DEFAULT_PASS, login: 'x', id: 3727618, fullName: 'x');
-            _loginToCC(context, user);
-          },
-          child: Text('Login'),
-        ),
-      ],
+          ElevatedButton(
+            onPressed: () {
+              _signUpUser();
+            },
+            child: Text('SignUp'),
+          ),
+          Text('or'),
+          ElevatedButton(
+            onPressed: () {
+              var user = CubeUser(
+                  password: DEFAULT_PASS,
+                  login: 'x',
+                  id: 3727618,
+                  fullName: 'x',);
+
+              /*var user = CubeUser(
+                password: DEFAULT_PASS,
+                login: 'y',
+                id: 3727946,
+                fullName: 'y',
+              );*/
+
+              _loginToCC(context, user);
+            },
+            child: Text('Login'),
+          ),
+        ],
+      ),
     );
   }
 
   _loginToCC(BuildContext context, CubeUser user) {
-    //if (_isLoginContinues) return;
-
-    /*setState(
-          () {
-        _isLoginContinues = true;
-        _selectedUserId = user.id;
-      },
-    );*/
+    progresDialog.show();
 
     if (CubeSessionManager.instance.isActiveSessionValid()) {
+      print('session valid');
       _loginToCubeChat(context, user);
     } else {
+      print('session invalid');
       createSession(user).then(
         (cubeSession) {
           _loginToCubeChat(context, user);
@@ -80,14 +99,15 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   void _loginToCubeChat(BuildContext context, CubeUser user) {
-    CubeChatConnection.instance.login(user).then((cubeUser) {
-      /*setState(() {
+    CubeChatConnection.instance.login(user).then(
+      (cubeUser) {
+        /*setState(() {
         _isLoginContinues = false;
         _selectedUserId = 0;
       });*/
-      _goSelectOpponentsScreen(context, cubeUser);
-      print('cube user after login = ${jsonEncode(cubeUser)}');
-    }).catchError(_processLoginError);
+        _checkUserActivityInFirebase(cubeUser);
+      },
+    ).catchError(_processLoginError);
   }
 
   void _processLoginError(exception) {
@@ -137,5 +157,24 @@ class _LoginPageState extends State<LoginPage> {
         print('After sign up user = ${jsonEncode(user)}');
       },
     );
+  }
+
+  void _checkUserActivityInFirebase(CubeUser user) {
+    progresDialog.hide();
+    print('cube user after login = ${jsonEncode(user)}');
+
+    var userRef = databaseReference.child('users').child(user.id.toString());
+    userRef.once().then((snapshot) {
+      print('user in firebase = ${snapshot.key} -> ${snapshot.value}');
+      if (snapshot.value == null) {
+        userRef.set(jsonEncode(user)).then((value) {
+          _goSelectOpponentsScreen(context, user);
+        });
+      } else {
+        CubeUser cubeUser = CubeUser.fromJson(jsonDecode(snapshot.value));
+        print('final user from firebase = ${jsonEncode(cubeUser)}');
+        _goSelectOpponentsScreen(context, user);
+      }
+    });
   }
 }

@@ -32,6 +32,7 @@ dependencies:
   firebase_core: ^0.5.0
   firebase_database: ^4.0.0
   connectycube_sdk: ^1.0.0
+  progress_dialog: ^1.2.4
 
 
 dev_dependencies:
